@@ -4,9 +4,6 @@ import numpy as np
 from transform import four_point_transform
 from colorCorrect import simplest_cb, adjust_gamma
 
-
-output = 1
-
 def splitPhotos(path, debug=0, write=0):
     image = cv2.imread(path)
     #Crop left noise
@@ -28,7 +25,7 @@ def splitPhotos(path, debug=0, write=0):
 
 
     #Create a mask
-    lower_black = np.array([240,240,240], dtype = "uint16")
+    lower_black = np.array([235,235,235], dtype = "uint16")
     upper_black = np.array([255,255,255], dtype = "uint16")
     black_mask = cv2.inRange(image, lower_black, upper_black)
     if debug == 1:
@@ -61,7 +58,7 @@ def splitPhotos(path, debug=0, write=0):
     #Find contours and keep the largets ones (except the largest one and remove the unwanted ones)
     cnts = cv2.findContours(blurred.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
-    cnts = sorted( (c for c in cnts if cv2.arcLength(c, True) > 750) , key = cv2.contourArea, reverse = True)[1:]
+    cnts = sorted( (c for c in cnts if cv2.arcLength(c, True) > 500) , key = cv2.contourArea, reverse = True)[1:]
 
     #Loop over the contours
     name = path.split('\\')[-1].split('.')[0]
@@ -79,15 +76,16 @@ def splitPhotos(path, debug=0, write=0):
             screenCnt = approx
             photo = four_point_transform(orig, screenCnt.reshape(4, 2)*ratio)
             out = simplest_cb(photo, 1)
-            if output == 1:
+            if debug > 0:
                 temp1 = imutils.resize(photo, height = 600)
-                #cv2.imshow("Cropped", temp1)
+                cv2.imshow("Cropped", temp1)
                 temp2 = imutils.resize(out, height = 600)
-                #cv2.imshow("Corrected", temp2)
-                #cv2.waitKey(0)
+                cv2.imshow("Corrected", temp2)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
             count += 1
             if(write == 1):
-                cv2.imwrite(".\\resources\\output\\" + name + "-" + str(count) + ".jpg", photo)
+                cv2.imwrite(".\\resources\\output\\" + name + "-" + str(count) + ".jpg", out)
 
     print( name + ": " + str(count))
 
